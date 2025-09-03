@@ -5,13 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, PlaneTakeoff, PlaneLanding } from 'lucide-react';
+import { PlaneTakeoff, PlaneLanding } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/firebase/client';
-import { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 type Flight = {
     id: number;
@@ -26,76 +22,10 @@ type Flight = {
     stops: number;
 };
 
-// This is a placeholder function for a real API call.
-async function getIsFlightSaved(userId: string, flightId: number): Promise<boolean> {
-    console.log(`Checking if flight ${flightId} is saved for user ${userId}. Returning mock data.`);
-    // In a real app, this would check a 'savedFlights' collection in Firestore.
-    // To keep this component free of server-side SDKs, we use mock data.
-    return [2, 4].includes(flightId);
-}
-
-// This is a placeholder function for a real API call.
-async function toggleFlightSaveStatus(userId: string, flightId: number, isCurrentlySaved: boolean): Promise<void> {
-     console.log(`Toggling save status for flight ${flightId} for user ${userId}. Currently saved: ${isCurrentlySaved}`);
-     // In a real app, this would call a secure API endpoint that uses the Admin SDK
-     // to add or remove the flight ID from the user's document in Firestore.
-}
-
-
 export function FlightResultCard({ flight }: { flight: Flight }) {
-  const { toast } = useToast();
-  const [isSaved, setIsSaved] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const user = auth.currentUser;
-  const router = useRouter();
-
-
-  useEffect(() => {
-    const checkIfSaved = async () => {
-        if (!user) {
-            setIsLoading(false);
-            return;
-        };
-        setIsLoading(true);
-        const savedStatus = await getIsFlightSaved(user.uid, flight.id);
-        setIsSaved(savedStatus);
-        setIsLoading(false);
-    };
-    checkIfSaved();
-  }, [user, flight.id]);
-
-  const handleSave = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user) {
-        toast({
-            title: "Authentication required",
-            description: "You need to be logged in to save flights.",
-            action: <Button onClick={() => router.push('/login')}>Login</Button>
-        });
-        return;
-    }
-    setIsSaving(true);
-    
-    try {
-        await toggleFlightSaveStatus(user.uid, flight.id, isSaved);
-        setIsSaved(!isSaved);
-        toast({ title: isSaved ? "Flight unsaved!" : "Flight saved!" });
-    } catch (error) {
-        console.error("Error saving flight:", error);
-        toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: "There was a problem saving your flight.",
-        });
-    } finally {
-        setIsSaving(false);
-    }
-  };
+  const searchParams = useSearchParams();
 
   return (
-    <Link href={`/flights/${flight.id}`} className="block">
     <Card className="hover:shadow-lg transition-all duration-300 ease-in-out group border-transparent hover:border-primary/50">
       <CardContent className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
@@ -134,17 +64,12 @@ export function FlightResultCard({ flight }: { flight: Flight }) {
 
           <div className="md:col-span-3 flex flex-col items-end justify-center gap-2 text-right">
             <p className="text-3xl font-extrabold text-primary">${flight.price}</p>
-            <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2 w-full">
-                <Button size="sm" variant="outline" className="w-full" onClick={handleSave} disabled={isSaving || isLoading}>
-                    <Heart className={cn("h-4 w-4 mr-2", isSaved && "fill-red-500 text-red-500")} /> 
-                    {isSaving ? 'Saving...' : (isSaved ? 'Saved' : 'Save')}
-                </Button>
-                <Button size="sm" className="w-full">Select</Button>
-            </div>
+            <Link href={`/flights/${flight.id}?${searchParams.toString()}`} className="w-full">
+              <Button size="sm" className="w-full">Select</Button>
+            </Link>
           </div>
         </div>
       </CardContent>
     </Card>
-    </Link>
   );
 }

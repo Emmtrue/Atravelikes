@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, Users, ArrowRightLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,14 +25,20 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { handleFlightSearch } from "@/app/actions"
-import { useToast } from "@/hooks/use-toast"
 import { AutocompleteInput } from "./autocomplete-input"
 import { Input } from "@/components/ui/input"
-import { useRouter } from "next/navigation"
+import { destinations } from '@/lib/destinations'
 
+const destinationLabels = destinations.map(d => d.label);
+
+// Zod schema for form validation
 const FormSchema = z.object({
-  origin: z.string().min(1, { message: "Origin is required."}),
-  destination: z.string().min(1, { message: "Destination is required." }),
+  origin: z.string().refine(val => destinationLabels.includes(val), {
+    message: "Please select a valid origin from the list.",
+  }),
+  destination: z.string().refine(val => destinationLabels.includes(val), {
+    message: "Please select a valid destination from the list.",
+  }),
   departureDate: z.date({ required_error: "Departure date is required." }),
   returnDate: z.date().optional(),
   passengers: z.coerce.number().int().min(1, "At least one passenger is required.").max(9, "Maximum 9 passengers."),
@@ -45,7 +52,6 @@ const FormSchema = z.object({
 
 
 export function FlightSearchForm() {
-  const { toast } = useToast();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -55,29 +61,33 @@ export function FlightSearchForm() {
       destination: "",
       passengers: 1,
     },
-  })
+  });
+
+  // Helper to get the clean city/country name from the formatted label
+  const getCleanName = (label: string) => {
+    if (!label) return '';
+    const destination = destinations.find(d => d.label === label);
+    return destination ? destination.city : label;
+  };
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    const searchParams = new URLSearchParams({
-        origin: data.origin,
-        destination: data.destination,
+    // 1. Get clean names for URL
+    const cleanedOrigin = getCleanName(data.origin);
+    const cleanedDestination = getCleanName(data.destination);
+
+    // 2. Construct URL search params object
+    const params = new URLSearchParams({
+        origin: cleanedOrigin,
+        destination: cleanedDestination,
         departureDate: data.departureDate.toISOString(),
         passengers: data.passengers.toString(),
-      });
-    
+    });
     if (data.returnDate) {
-        searchParams.append('returnDate', data.returnDate.toISOString());
+        params.set('returnDate', data.returnDate.toISOString());
     }
 
-    const result = await handleFlightSearch({
-        ...data,
-        departureDate: data.departureDate.toISOString(),
-        returnDate: data.returnDate?.toISOString(),
-    }, searchParams);
-
-    if (result.path) {
-        router.push(result.path);
-    }
+    // 3. Navigate to the flights page with the correctly formatted query string
+    router.push(`/flights?${params.toString()}`);
   }
 
   return (

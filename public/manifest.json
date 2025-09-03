@@ -1,0 +1,22 @@
+
+{
+  "name": "Atravelikes",
+  "short_name": "Atravelikes",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F0F8FF",
+  "theme_color": "#4682B4",
+  "description": "Your Journey Starts Here. Discover and book flights, hotels, and more.",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -5,13 +5,9 @@ import * as React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { PlaneTakeoff, Globe, MapPin } from "lucide-react"
+import { Globe, MapPin } from "lucide-react"
 import { getAutocompleteSuggestions } from "@/app/actions"
-
-type Suggestion = {
-  name: string
-  type: 'city' | 'country'
-}
+import type { Destination } from "@/lib/destinations"
 
 interface AutocompleteInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
   value: string
@@ -21,13 +17,13 @@ interface AutocompleteInputProps extends Omit<React.InputHTMLAttributes<HTMLInpu
 
 const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputProps>(
   ({ value, onChange, onSelect, ...props }, ref) => {
-    const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+    const [suggestions, setSuggestions] = useState<Destination[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [showSuggestions, setShowSuggestions] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
 
     const fetchSuggestions = useCallback(async (inputValue: string) => {
-      if (inputValue.length < 2) {
+      if (inputValue.length < 1) {
         setSuggestions([])
         setShowSuggestions(false)
         return
@@ -50,24 +46,30 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
 
       return () => clearTimeout(debounceTimeout)
     }, [value, fetchSuggestions])
-
-    useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-          setShowSuggestions(false)
-        }
-      }
-      document.addEventListener("mousedown", handleClickOutside)
-      return () => document.removeEventListener("mousedown", handleClickOutside)
-    }, [])
-
-    const handleSelect = (suggestionName: string) => {
-      onChange(suggestionName)
+    
+    const handleSelect = (suggestion: Destination) => {
+      onChange(suggestion.label)
       if (onSelect) {
-        onSelect(suggestionName)
+        onSelect(suggestion.label)
       }
       setShowSuggestions(false)
     }
+
+    const handleClickOutside = useCallback((event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+          setShowSuggestions(false);
+          // Check if current value is a valid selection
+          if(value && !suggestions.some(s => s.label.toLowerCase() === value.toLowerCase())) {
+            // Optional: clear if not a valid selection. 
+            // For now, we allow free text but validation will catch it.
+          }
+      }
+    }, [value, suggestions]);
+
+    useEffect(() => {
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [handleClickOutside]);
     
     return (
       <div className="relative w-full" ref={containerRef}>
@@ -77,7 +79,7 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => {
-            if (suggestions.length > 0) setShowSuggestions(true)
+            if (value) fetchSuggestions(value)
           }}
           autoComplete="off"
         />
@@ -92,15 +94,15 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
               <ul className="py-1">
                 {suggestions.map((suggestion) => (
                   <li
-                    key={suggestion.name}
+                    key={suggestion.id}
                     className="flex items-center px-3 py-2 cursor-pointer hover:bg-accent"
                     onMouseDown={(e) => { // use onMouseDown to avoid blur event firing first
                       e.preventDefault();
-                      handleSelect(suggestion.name);
+                      handleSelect(suggestion);
                     }}
                   >
                     {suggestion.type === 'city' ? <MapPin className="h-4 w-4 mr-2 text-muted-foreground" /> : <Globe className="h-4 w-4 mr-2 text-muted-foreground" />}
-                    <span className="text-sm">{suggestion.name}</span>
+                    <span className="text-sm">{suggestion.label}</span>
                   </li>
                 ))}
               </ul>

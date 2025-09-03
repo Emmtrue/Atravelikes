@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Star, MapPin, Wifi, Utensils, ParkingCircle, Sun } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import React from 'react';
 
 export default function HotelDetailsPage({ params }: { params: { id: string } }) {
   // In a real app, you'd fetch this data based on params.id
+  const id = React.use(params).id;
+  
   const hotel = {
-    id: params.id,
+    id: id,
     name: 'The Grand Parisian Hotel',
     location: 'Paris, France',
     rating: 4.8,
@@ -93,4 +96,3 @@ export default function HotelDetailsPage({ params }: { params: { id: string } })
     </div>
   );
 }
-

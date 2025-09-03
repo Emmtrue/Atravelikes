@@ -13,10 +13,10 @@ export function Footer() {
           &copy; {new Date().getFullYear()} Atravelikes. All rights reserved.
         </p>
         <div className="flex items-center gap-4">
-          <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+          <Link href="/terms-of-service" className="text-sm text-muted-foreground hover:text-primary">
             Terms of Service
           </Link>
-          <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
+          <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-primary">
             Privacy Policy
           </Link>
         </div>

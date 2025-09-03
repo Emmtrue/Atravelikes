@@ -3,6 +3,7 @@
 
 import { z } from 'zod'
 import { redirect } from 'next/navigation';
+import { destinations } from '@/lib/destinations';
 
 // This file has been refactored to remove all `firebase-admin` dependencies,
 // which were causing critical build failures. The logic for interacting with
@@ -25,21 +26,16 @@ const FlightSearchSchema = z.object({
 })
 
 export async function handleFlightSearch(
-    data: z.infer<typeof FlightSearchSchema>,
-    searchParams: URLSearchParams
+    data: z.infer<typeof FlightSearchSchema>
 ) {
   const validatedFields = FlightSearchSchema.safeParse(data);
 
   if (!validatedFields.success) {
     console.error('Flight Search Validation Errors:', validatedFields.error.flatten().fieldErrors);
-    return { path: null };
+    // This action no longer controls navigation, so we just log the search.
   }
   
   await saveSearch('flight', validatedFields.data);
-
-  return {
-      path: `/flights?${searchParams.toString()}`
-  };
 }
 
 const HotelSearchSchema = z.object({
@@ -99,9 +95,8 @@ export async function getAutocompleteSuggestions(input: string) {
     const searchTerm = input.toLowerCase();
     
     try {
-        const { africanPlaces } = await import('@/lib/firebase/places-data');
-        const suggestions = africanPlaces
-            .filter(place => place.name.toLowerCase().includes(searchTerm))
+        const suggestions = destinations
+            .filter(place => place.label.toLowerCase().includes(searchTerm))
             .slice(0, 10); // Limit to 10 suggestions
         
         return suggestions;

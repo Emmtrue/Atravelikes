@@ -1,16 +1,22 @@
+
+'use client';
+
 import { Suspense } from 'react';
 import { DestinationGuide } from '@/components/destination-guide';
 import { FlightResultCard } from '@/components/flight-result-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-
-export const dynamic = 'force-dynamic';
+import { useSearchParams } from 'next/navigation';
 
 const airlines = ['American Airlines', 'Delta', 'United', 'Southwest', 'British Airways'];
 
-export default function FlightsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
-  const origin = searchParams?.origin as string || 'Origin';
-  const destination = searchParams?.destination as string || 'your destination';
+// Helper to capitalize first letter
+const capitalize = (s: string) => s && s.charAt(0).toUpperCase() + s.slice(1);
+
+function FlightsPageContent() {
+  const searchParams = useSearchParams();
+  const origin = searchParams.get('origin') as string || 'Origin';
+  const destination = searchParams.get('destination') as string || 'your destination';
 
   const mockFlights = Array.from({ length: 5 }, (_, i) => ({
     id: i,
@@ -24,13 +30,19 @@ export default function FlightsPage({ searchParams }: { searchParams: { [key: st
     price: 450 + i * 50,
     stops: i % 2,
   }));
+  
+  const departureDateStr = searchParams.get('departureDate') as string;
+  const departureDate = departureDateStr ? new Date(departureDateStr) : null;
+  const formattedDate = departureDate && !isNaN(departureDate.getTime()) 
+    ? departureDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : 'your selected date';
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-6">
-            <h1 className="text-3xl font-bold">Flights to {destination.charAt(0).toUpperCase() + destination.slice(1)}</h1>
-            <p className="text-muted-foreground">Showing best results from {origin.toUpperCase()} for {new Date(searchParams?.departureDate as string).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <h1 className="text-3xl font-bold">Flights to {capitalize(destination)}</h1>
+            <p className="text-muted-foreground">Showing best results from {origin.toUpperCase()} for {formattedDate}</p>
             {mockFlights.map((flight) => (
                 <FlightResultCard key={flight.id} flight={flight} />
             ))}
@@ -45,6 +57,14 @@ export default function FlightsPage({ searchParams }: { searchParams: { [key: st
   );
 }
 
+export default function FlightsPage() {
+    return (
+        <Suspense fallback={<FlightsPageSkeleton/>}>
+            <FlightsPageContent />
+        </Suspense>
+    )
+}
+
 function DestinationGuideSkeleton() {
     return (
         <div className="space-y-4 p-6 border rounded-lg bg-card">
@@ -56,4 +76,25 @@ function DestinationGuideSkeleton() {
             <Skeleton className="h-4 w-5/6" />
         </div>
     )
+}
+
+function FlightsPageSkeleton() {
+    return (
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div className="lg:col-span-2 space-y-6">
+                    <Skeleton className="h-10 w-1/2" />
+                    <Skeleton className="h-6 w-3/4" />
+                    <div className="space-y-4">
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                    </div>
+                </div>
+                <div className="lg:col-span-1 sticky top-24">
+                    <DestinationGuideSkeleton />
+                </div>
+            </div>
+        </div>
+    );
 }

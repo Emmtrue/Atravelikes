@@ -1,7 +1,8 @@
+
 {
   "name": "nextn",
   "version": "0.1.0",
-  "private": true,
+  "private": "true",
   "scripts": {
     "dev": "next dev -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
@@ -45,10 +46,10 @@
     "dotenv": "^16.6.1",
     "embla-carousel-react": "^8.1.6",
     "firebase": "^10.14.1",
-    "firebase-admin": "^12.2.0",
     "genkit": "1.17.0",
     "lucide-react": "^0.417.0",
     "next": "15.5.2",
+    "next-themes": "^0.3.0",
     "patch-package": "^8.0.0",
     "process": "^0.11.10",
     "react": "^18.3.1",

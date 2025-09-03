@@ -1,46 +1,45 @@
 
 'use client';
 
-import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
-import {
-  LayoutDashboard,
+  Home,
   Globe,
-  Users,
+  Search,
   Settings,
-  Bot,
+  Package2,
   LogOut,
-  User,
-  ShieldCheck,
+  Users,
+  CreditCard,
+  MessageSquare,
 } from 'lucide-react';
+
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { auth } from '@/lib/firebase/client';
-import { onIdTokenChanged, signOut, type User as FirebaseUser } from 'firebase/auth';
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { ChevronRight } from 'lucide-react';
 
 
-interface AppUser extends FirebaseUser {
-  isSuperAdmin?: boolean;
+function NavLink({ href, label, icon: Icon, pathname }: { href: string, label: string, icon: React.ElementType, pathname: string }) {
+    return (
+        <Link
+            href={href}
+            className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+                pathname.startsWith(href) && 'bg-muted text-primary'
+            )}
+        >
+            <Icon className="h-4 w-4" />
+            {label}
+        </Link>
+    );
 }
 
 export default function SuperAdminLayout({
@@ -48,160 +47,93 @@ export default function SuperAdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const { user, loading, isSuperAdmin, signOut } = useAuth();
   const router = useRouter();
-  const [user, setUser] = React.useState<AppUser | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const isActive = (path: string) => pathname.startsWith(path);
+  const pathname = usePathname();
 
-  React.useEffect(() => {
-    const unsubscribe = onIdTokenChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        const tokenResult = await currentUser.getIdTokenResult();
-        const isSuperAdmin = tokenResult.claims.role === 'superadmin';
-        
-        if (pathname.startsWith('/super-admin') && !isSuperAdmin) {
-          router.push('/login'); // Redirect non-admins trying to access admin area
-          return;
-        }
-        setUser({ ...currentUser, isSuperAdmin });
-      } else {
-        // If no user, redirect any page within super-admin (except the login page itself) to the admin login
-        if(pathname !== '/super-admin') {
-            router.push('/super-admin');
-        }
-        setUser(null);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [pathname, router]);
+  useEffect(() => {
+    if (loading) {
+      return; // Wait until authentication state is loaded
+    }
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    await signOut(auth);
-    router.push('/super-admin');
-    router.refresh();
-  };
-  
-  // This is the dedicated login page for the admin panel
-  if (pathname === '/super-admin') {
-    return <>{children}</>;
-  }
+    const isLoginPage = pathname === '/super-admin/login';
 
+    if (!isSuperAdmin && !isLoginPage) {
+        // If the user is not an admin and not on the login page,
+        // redirect them to the login page.
+        router.replace('/super-admin/login');
+    } else if (isSuperAdmin && isLoginPage) {
+        // If the user is an admin but somehow landed on the login page,
+        // redirect them to the dashboard.
+        router.replace('/super-admin/dashboard');
+    }
+  }, [loading, isSuperAdmin, pathname, router]);
 
+  // While loading, show a full-screen loader to prevent flash of content
   if (loading) {
-      return (
-          <div className="flex h-screen items-center justify-center">
-              <p>Loading Admin Panel...</p>
-          </div>
-      )
+     return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+          <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+        </div>
+    );
   }
   
-  // The useEffect handles redirecting away, so we can return null to avoid content flash
-  if (!user || !user.isSuperAdmin) {
-    return null;
+  // If the user is not an admin, we only want to render the login page.
+  // The useEffect above will handle redirecting them there if they aren't.
+  if (!isSuperAdmin) {
+    // Only render the children (the login page) if we are on the login path.
+    // Otherwise, render the loader while the redirect happens.
+    return (
+        <>
+            {pathname === '/super-admin/login' ? children : (
+                <div className="flex h-screen w-full items-center justify-center bg-background">
+                    <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+                </div>
+            )}
+        </>
+    );
   }
 
+  const navLinks = [
+    { href: '/super-admin/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/super-admin/users', label: 'Users', icon: Users },
+    { href: '/super-admin/bookings', label: 'Bookings', icon: CreditCard },
+    { href: '/super-admin/website-management', label: 'Website Management', icon: Globe },
+    { href: '/super-admin/scraper', label: 'Scraper', icon: Search },
+    { href: '/super-admin/settings', label: 'Settings', icon: Settings },
+  ];
 
+  // If we reach here, user is a confirmed super admin, so render the full dashboard layout.
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <ShieldCheck className="h-5 w-5" />
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+        <div className="hidden border-r bg-muted/40 md:block">
+        <div className="flex h-full max-h-screen flex-col gap-2 sticky top-0">
+            <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+            <Link href="/super-admin/dashboard" className="flex items-center gap-2 font-semibold">
+                <Package2 className="h-6 w-6" />
+                <span className="">Atravelikes Admin</span>
+            </Link>
             </div>
-            <span className="text-lg font-semibold">Admin Panel</span>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <Link href="/super-admin/dashboard">
-                <SidebarMenuButton isActive={isActive('/super-admin/dashboard')}>
-                  <LayoutDashboard />
-                  Dashboard
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <Link href="/super-admin/scraper">
-                <SidebarMenuButton isActive={isActive('/super-admin/scraper')}>
-                  <Bot />
-                  Scraper
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-               <Link href="/super-admin/websites">
-                <SidebarMenuButton isActive={isActive('/super-admin/websites')}>
-                  <Globe />
-                  Website Management
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-               <Link href="/super-admin/user-management">
-                <SidebarMenuButton isActive={isActive('/super-admin/user-management')}>
-                  <Users />
-                  User Management
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-               <Link href="/super-admin/settings">
-                <SidebarMenuButton isActive={isActive('/super-admin/settings')}>
-                  <Settings />
-                  Settings
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
-      <SidebarInset>
-        <header className="flex h-14 items-center justify-between border-b bg-background/90 px-4 backdrop-blur-sm">
-            <SidebarTrigger className="md:hidden" />
-            <div className="ml-auto">
-              {!loading && user && (
-                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.photoURL || 'https://i.pravatar.cc/150'} alt={user.displayName || 'Admin'} />
-                        <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0) || 'A'}</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.displayName || 'Administrator'}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+            <div className="flex-1 overflow-y-auto">
+            <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+                {navLinks.map(link => (
+                    <NavLink key={link.href} {...link} pathname={pathname} />
+                ))}
+            </nav>
             </div>
-          </header>
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+            <div className="mt-auto p-4">
+            <Button size="sm" variant="ghost" className="w-full justify-start" onClick={signOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+            </Button>
+            </div>
+        </div>
+        </div>
+        <main className="flex flex-col flex-1 overflow-auto">
+        <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+            {children}
+        </div>
+        </main>
+    </div>
   );
 }

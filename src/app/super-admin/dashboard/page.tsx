@@ -1,113 +1,192 @@
+import {
+  Activity,
+  ArrowUpRight,
+  CircleUser,
+  CreditCard,
+  DollarSign,
+  Globe,
+  Menu,
+  Package2,
+  Search,
+  Users,
+  Eye,
+  Settings,
+  PlusCircle,
+} from 'lucide-react';
+import Link from 'next/link';
 
-'use client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { ScraperActivityChart } from './scraper-activity-chart';
 
-import { BarChart, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Line, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, DollarSign, Plane } from 'lucide-react';
-
-const userSignupsData = [
-  { name: 'Jan', users: 30 },
-  { name: 'Feb', users: 45 },
-  { name: 'Mar', users: 60 },
-  { name: 'Apr', users: 70 },
-  { name: 'May', users: 90 },
-  { name: 'Jun', users: 110 },
+const FALLBACK_SEED_WEBSITES = [
+    'trip.com', 'expedia.com', 'skyscanner.com', 'kayak.com', 'momondo.com', 'google.com/flights',
+    'cheapflights.com', 'aviasales.com', 'edreams.com', 'opodo.com', 'flightsfinder.com', 'flightconnections.com',
+    'hopper.com', 'secretflying.com', 'airfarewatchdog.com', 'flightmatrix.com', 'booking.com', 'priceline.com',
+    'hotwire.com', 'going.com', 'cheapoair.com', 'tripadvisor.com', 'flightradar24.com', 'flightaware.com',
+    'flightstats.com', 'travelocity.com', 'orbitz.com', 'airasia.com', 'ryanair.com', 'easyjet.com',
+    'southwest.com', 'klm.com', 'emirates.com', 'flydubai.com', 'qatarairways.com',
 ];
 
-const revenueData = [
-    { name: 'Jan', revenue: 4000 },
-    { name: 'Feb', revenue: 3000 },
-    { name: 'Mar', revenue: 5000 },
-    { name: 'Apr', revenue: 4500 },
-    { name: 'May', revenue: 6000 },
-    { name: 'Jun', revenue: 5500 },
-];
+export default function DashboardPage() {
+    const totalWebsites = FALLBACK_SEED_WEBSITES.length;
 
-const popularDestinationsData = [
-  { name: 'Cairo', bookings: 400 },
-  { name: 'Lagos', bookings: 300 },
-  { name: 'Nairobi', bookings: 250 },
-  { name: 'Cape Town', bookings: 200 },
-  { name: 'Marrakech', bookings: 150 },
-];
-
-export default function AnalyticsDashboardPage() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <p className="text-muted-foreground">An overview of your platform's analytics.</p>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$28,500</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+405</div>
-            <p className="text-xs text-muted-foreground">+12.2% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-            <Plane className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+1,329</div>
-            <p className="text-xs text-muted-foreground">+8.5% from last month</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>User Sign-ups</CardTitle>
-            <CardDescription>New users in the last 6 months.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={userSignupsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="users" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Popular Destinations</CardTitle>
-            <CardDescription>Top 5 most booked destinations.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={popularDestinationsData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis type="category" dataKey="name" width={80} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="bookings" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="flex flex-col">
+      <main className="flex flex-1 flex-col gap-4 md:gap-8">
+         <div className="mb-4">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">A high-level overview of your application's data.</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Seed Websites
+              </CardTitle>
+              <Globe className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalWebsites}</div>
+              <p className="text-xs text-muted-foreground">
+                Currently in the auto-scraper list
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Recent Scraped Flights
+              </CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">+25</div>
+              <p className="text-xs text-muted-foreground">
+                in the last hour (mock data)
+              </p>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Recent Scraped Hotels</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">+12</div>
+              <p className="text-xs text-muted-foreground">
+                in the last hour (mock data)
+              </p>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Actions</CardTitle>
+               <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+                <Link href="/super-admin/website-management">
+                    <Button size="sm" className="w-full">Manage Sites</Button>
+                </Link>
+                 <Link href="/super-admin/scraper">
+                    <Button size="sm" variant="outline" className="w-full">Go to Scraper</Button>
+                </Link>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+          <Card className="xl:col-span-2">
+            <CardHeader>
+              <CardTitle>Scraper Activity</CardTitle>
+              <CardDescription>
+                A visual summary of recent scraping tasks. (Mock Data)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ScraperActivityChart />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Manual Scrapes</CardTitle>
+              <CardDescription>
+                Latest single-URL scrapes. (Mock Data)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Website</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>
+                      <div className="font-medium">expedia.com</div>
+                      <div className="hidden text-sm text-muted-foreground md:inline">
+                        1 minute ago
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                       <Badge variant="secondary">Success</Badge>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
+                      <div className="font-medium">kayak.com</div>
+                      <div className="hidden text-sm text-muted-foreground md:inline">
+                        5 minutes ago
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <Badge variant="secondary">Success</Badge>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
+                      <div className="font-medium">some-other-site.com</div>
+                      <div className="hidden text-sm text-muted-foreground md:inline">
+                        12 minutes ago
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <Badge variant="destructive">Failed</Badge>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 }

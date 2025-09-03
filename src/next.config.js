@@ -23,18 +23,6 @@ const nextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/auth/login',
-        destination: '/api/auth'
-      },
-      {
-        source: '/api/auth/logout',
-        destination: '/api/auth'
-      }
-    ]
-  },
   webpack: (config) => {
     // Add wasm support
     config.experiments = {
