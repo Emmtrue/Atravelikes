@@ -29,10 +29,16 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
         return
       }
       setIsLoading(true)
-      const result = await getAutocompleteSuggestions(inputValue)
-      setSuggestions(result)
-      setIsLoading(false)
-      setShowSuggestions(true)
+      try {
+        const result = await getAutocompleteSuggestions(inputValue)
+        setSuggestions(result)
+        setShowSuggestions(true)
+      } catch (error) {
+        console.error("Failed to fetch autocomplete suggestions", error);
+        setSuggestions([]);
+      } finally {
+        setIsLoading(false)
+      }
     }, [])
 
     useEffect(() => {
@@ -58,13 +64,8 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
     const handleClickOutside = useCallback((event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
           setShowSuggestions(false);
-          // Check if current value is a valid selection
-          if(value && !suggestions.some(s => s.label.toLowerCase() === value.toLowerCase())) {
-            // Optional: clear if not a valid selection. 
-            // For now, we allow free text but validation will catch it.
-          }
       }
-    }, [value, suggestions]);
+    }, []);
 
     useEffect(() => {
       document.addEventListener("mousedown", handleClickOutside)
@@ -84,7 +85,7 @@ const AutocompleteInput = React.forwardRef<HTMLInputElement, AutocompleteInputPr
           autoComplete="off"
         />
         {showSuggestions && (
-          <div className="absolute z-10 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
+          <div className="absolute z-50 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
             {isLoading ? (
               <div className="p-2 space-y-2">
                 <Skeleton className="h-8 w-full" />

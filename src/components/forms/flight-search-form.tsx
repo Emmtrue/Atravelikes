@@ -28,6 +28,7 @@ import { handleFlightSearch } from "@/app/actions"
 import { AutocompleteInput } from "./autocomplete-input"
 import { Input } from "@/components/ui/input"
 import { destinations } from '@/lib/destinations'
+import { useToast } from "@/hooks/use-toast"
 
 const destinationLabels = destinations.map(d => d.label);
 
@@ -53,6 +54,7 @@ const FormSchema = z.object({
 
 export function FlightSearchForm() {
   const router = useRouter();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -67,26 +69,40 @@ export function FlightSearchForm() {
   const getCleanName = (label: string) => {
     if (!label) return '';
     const destination = destinations.find(d => d.label === label);
-    return destination ? destination.city : label;
+    // Use the city name for the URL param as it's more human-readable
+    return destination ? destination.city : label.split(' ')[0];
   };
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    // 1. Get clean names for URL
+    const result = await handleFlightSearch({
+      ...data,
+      departureDate: format(data.departureDate, 'yyyy-MM-dd'),
+      returnDate: data.returnDate ? format(data.returnDate, 'yyyy-MM-dd') : undefined
+    });
+
+    if (!result.success) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please check your inputs and try again.",
+      });
+      console.error("Server-side validation failed:", result.errors);
+      return;
+    }
+
     const cleanedOrigin = getCleanName(data.origin);
     const cleanedDestination = getCleanName(data.destination);
 
-    // 2. Construct URL search params object
     const params = new URLSearchParams({
         origin: cleanedOrigin,
         destination: cleanedDestination,
-        departureDate: data.departureDate.toISOString(),
+        departureDate: format(data.departureDate, 'yyyy-MM-dd'),
         passengers: data.passengers.toString(),
     });
     if (data.returnDate) {
-        params.set('returnDate', data.returnDate.toISOString());
+        params.set('returnDate', format(data.returnDate, 'yyyy-MM-dd'));
     }
 
-    // 3. Navigate to the flights page with the correctly formatted query string
     router.push(`/flights?${params.toString()}`);
   }
 
@@ -104,7 +120,7 @@ export function FlightSearchForm() {
                     <FormItem>
                       <FormLabel>From</FormLabel>
                       <FormControl>
-                        <AutocompleteInput placeholder="e.g., Cairo (Egypt)" {...field} />
+                        <AutocompleteInput placeholder="e.g., Cairo (CAI)" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -114,8 +130,8 @@ export function FlightSearchForm() {
               <Button type="button" variant="ghost" size="icon" className="mx-2 self-end mb-2 shrink-0" onClick={() => {
                 const origin = form.getValues("origin");
                 const destination = form.getValues("destination");
-                form.setValue("origin", destination);
-                form.setValue("destination", origin);
+                form.setValue("origin", destination, { shouldValidate: true });
+                form.setValue("destination", origin, { shouldValidate: true });
               }}>
                 <ArrowRightLeft className="h-4 w-4" />
               </Button>
@@ -127,7 +143,7 @@ export function FlightSearchForm() {
                     <FormItem>
                       <FormLabel>To</FormLabel>
                       <FormControl>
-                        <AutocompleteInput placeholder="e.g., Johannesburg (South Africa)" {...field} />
+                        <AutocompleteInput placeholder="e.g., Johannesburg (JNB)" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -156,7 +172,7 @@ export function FlightSearchForm() {
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {field.value ? (
-                            format(field.value, "PPP")
+                            <span className="truncate">{format(field.value, "PPP")}</span>
                           ) : (
                             <span>Pick a date</span>
                           )}
@@ -195,7 +211,7 @@ export function FlightSearchForm() {
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {field.value ? (
-                            format(field.value, "PPP")
+                            <span className="truncate">{format(field.value, "PPP")}</span>
                           ) : (
                             <span>One way</span>
                           )}

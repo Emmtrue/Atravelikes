@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Plane, Menu, LogOut, LayoutDashboard, Download } from 'lucide-react';
+import { Plane, Menu, LogOut, LayoutDashboard, Download, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, Suspense, useEffect } from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -57,6 +57,9 @@ export function Header() {
       </Link>
       <Link href="/#search" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary" onClick={closeSheet}>
         Flight Status
+      </Link>
+       <Link href="/airport-status" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary" onClick={closeSheet}>
+        Airport Status
       </Link>
     </>
   );

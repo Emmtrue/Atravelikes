@@ -7,6 +7,7 @@ import * as z from "zod"
 import { addDays, format } from "date-fns"
 import { CalendarIcon, Users, BedDouble } from "lucide-react"
 import type { DateRange } from "react-day-picker"
+import { useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -15,7 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { handleHotelSearch } from "@/app/actions"
-import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+
 
 const FormSchema = z.object({
   destination: z.string().min(3, { message: "Destination is required." }),
@@ -28,6 +30,8 @@ const FormSchema = z.object({
 
 export function HotelSearchForm() {
   const router = useRouter();
+  const { toast } = useToast();
+  
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -41,23 +45,29 @@ export function HotelSearchForm() {
   })
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    const searchParams = new URLSearchParams({
-        destination: data.destination,
-        checkInDate: data.dates.from.toISOString(),
-        checkOutDate: data.dates.to.toISOString(),
-        guests: data.guests.toString(),
-    });
-
     const payload = {
       destination: data.destination,
-      checkInDate: data.dates.from.toISOString(),
-      checkOutDate: data.dates.to.toISOString(),
+      checkInDate: format(data.dates.from, 'yyyy-MM-dd'),
+      checkOutDate: format(data.dates.to, 'yyyy-MM-dd'),
       guests: data.guests,
     }
     
-    const result = await handleHotelSearch(payload, searchParams);
-    if (result.path) {
-        router.push(result.path);
+    const result = await handleHotelSearch(payload);
+    
+    if (result.success) {
+      const searchParams = new URLSearchParams({
+          destination: data.destination,
+          checkInDate: format(data.dates.from, 'yyyy-MM-dd'),
+          checkOutDate: format(data.dates.to, 'yyyy-MM-dd'),
+          guests: data.guests.toString(),
+      });
+      router.push(`/hotels?${searchParams.toString()}`);
+    } else {
+       toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please check your inputs and try again.",
+      });
     }
   }
 

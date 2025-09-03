@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Mail, Plane, Calendar, DollarSign, Tag, ArrowRight } from 'lucide-react';
+import { ArrowLeft, User, Plane, ArrowRight } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 // Mock function to get booking data by ID
 const getBookingById = (id: string) => {
   // In a real app, this would be a database call.
+  // This is a sample structure based on the new flight details page.
   return {
     bookingId: id,
     user: {
@@ -28,27 +29,30 @@ const getBookingById = (id: string) => {
       avatar: 'https://picsum.photos/40/40?random=user1',
     },
     flight: {
-      number: 'AA456',
-      origin: 'JFK',
-      destination: 'LAX',
-      departureTime: '08:30',
-      arrivalTime: '11:45',
-      duration: '6h 15m'
+      ident: 'KQA535',
+      operator: 'Kenya Airways',
+      origin: { code: 'LOS', city: 'Lagos' },
+      destination: { code: 'NBO', city: 'Nairobi' },
+      scheduled_out: '2024-08-15T08:30:00Z',
+      scheduled_in: '2024-08-15T14:45:00Z',
     },
-    bookingDate: '2024-05-15T14:30:00Z',
+    bookingDate: '2024-07-21T14:30:00Z',
     price: 475.50,
     status: 'Confirmed',
+    fareType: 'Main Cabin',
     passengers: 1,
   };
 };
 
 export default function BookingDetailsPage({ params }: { params: { id: string } }) {
-  const resolvedParams = React.use(params);
-  const booking = getBookingById(resolvedParams.id);
+  const booking = getBookingById(params.id);
 
   if (!booking) {
     return <div>Booking not found</div>;
   }
+
+  const formatTime = (time: string | null | undefined) => time ? new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+  const formatDate = (time: string | null | undefined) => time ? new Date(time).toLocaleDateString() : 'N/A';
 
   return (
     <div className="space-y-8">
@@ -81,23 +85,27 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border rounded-lg">
                         <div className="text-center sm:text-left">
                             <p className="text-sm text-muted-foreground">Flight Number</p>
-                            <p className="font-bold text-lg">{booking.flight.number}</p>
+                            <p className="font-bold text-lg">{booking.flight.ident}</p>
+                        </div>
+                         <div className="text-center sm:text-left">
+                            <p className="text-sm text-muted-foreground">Airline</p>
+                            <p className="font-bold text-lg">{booking.flight.operator}</p>
                         </div>
                         <div className="text-center">
                             <p className="text-sm text-muted-foreground">Route</p>
                             <p className="font-bold text-lg flex items-center gap-2">
-                                {booking.flight.origin} <ArrowRight className="h-4 w-4" /> {booking.flight.destination}
+                                {booking.flight.origin.code} <ArrowRight className="h-4 w-4" /> {booking.flight.destination.code}
                             </p>
                         </div>
                     </div>
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="p-4 border rounded-lg">
-                            <p className="text-sm text-muted-foreground">Departure Time</p>
-                            <p className="font-bold text-lg">{booking.flight.departureTime}</p>
+                            <p className="text-sm text-muted-foreground">Departure</p>
+                            <p className="font-bold text-lg">{formatDate(booking.flight.scheduled_out)} at {formatTime(booking.flight.scheduled_out)}</p>
                         </div>
                          <div className="p-4 border rounded-lg">
-                            <p className="text-sm text-muted-foreground">Arrival Time</p>
-                            <p className="font-bold text-lg">{booking.flight.arrivalTime}</p>
+                            <p className="text-sm text-muted-foreground">Arrival</p>
+                            <p className="font-bold text-lg">{formatDate(booking.flight.scheduled_in)} at {formatTime(booking.flight.scheduled_in)}</p>
                         </div>
                     </div>
                 </CardContent>
@@ -126,7 +134,7 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle  className="flex items-center gap-2"><Tag /> Booking Summary</CardTitle>
+                    <CardTitle>Booking Summary</CardTitle>
                 </CardHeader>
                  <CardContent className="space-y-3">
                     <div className="flex justify-between items-center text-sm">
@@ -134,12 +142,12 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                         <span className="font-medium">{new Date(booking.bookingDate).toLocaleDateString()}</span>
                     </div>
                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">Booking Time</span>
-                        <span className="font-medium">{new Date(booking.bookingDate).toLocaleTimeString()}</span>
-                    </div>
-                     <div className="flex justify-between items-center text-sm">
                         <span className="text-muted-foreground">Passengers</span>
                         <span className="font-medium">{booking.passengers}</span>
+                    </div>
+                     <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Fare Type</span>
+                        <span className="font-medium">{booking.fareType}</span>
                     </div>
                     <Separator />
                      <div className="flex justify-between items-center">

@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, Hash } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -14,7 +15,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { handleStatusSearch } from "@/app/actions"
-import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+
 
 const FormSchema = z.object({
   flightNumber: z.string().regex(/^[A-Z0-9]{3,7}$/, "Invalid flight number format."),
@@ -23,6 +25,8 @@ const FormSchema = z.object({
 
 export function StatusSearchForm() {
   const router = useRouter();
+  const { toast } = useToast();
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -32,18 +36,24 @@ export function StatusSearchForm() {
   })
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    const searchParams = new URLSearchParams({
-        flightNumber: data.flightNumber,
-        date: data.date.toISOString(),
-    });
-    
     const payload = {
         flightNumber: data.flightNumber,
-        date: data.date.toISOString()
+        date: format(data.date, 'yyyy-MM-dd')
     }
-    const result = await handleStatusSearch(payload, searchParams);
-    if(result.path) {
-        router.push(result.path);
+    const result = await handleStatusSearch(payload);
+    
+    if(result.success) {
+        const searchParams = new URLSearchParams({
+            flightNumber: data.flightNumber,
+            date: format(data.date, 'yyyy-MM-dd'),
+        });
+        router.push(`/status?${searchParams.toString()}`);
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Validation Error",
+            description: "Please check your inputs and try again."
+        });
     }
   }
 
