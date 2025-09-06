@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Plane, Menu, LogOut, LayoutDashboard, Download, Wifi } from 'lucide-react';
+import { Plane, Menu, LogOut, LayoutDashboard, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, Suspense, useEffect } from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -11,9 +11,10 @@ import { AuthDialog } from '@/components/auth/auth-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '../ui/skeleton';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { ThemeToggleButton } from '../theme-toggle-button';
 import { Separator } from '../ui/separator';
+import { usePWAInstall } from '@/hooks/use-pwa-install';
 
 function AuthHandler() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -40,6 +41,12 @@ export function Header() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState('sign-in');
   const { user, loading, signOut } = useAuth();
+  const pathname = usePathname();
+  const { canInstallPWA, promptInstall } = usePWAInstall();
+  
+  if (pathname.startsWith('/super-admin')) {
+    return null;
+  }
   
   const handleAuthOpen = (tab: 'sign-in' | 'sign-up') => {
     setOpen(false);
@@ -128,6 +135,12 @@ export function Header() {
 
           <div className="hidden items-center gap-2 md:flex">
               <ThemeToggleButton />
+              {canInstallPWA && (
+                  <Button variant="outline" size="sm" onClick={promptInstall}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Install App
+                  </Button>
+              )}
               <UserMenu />
           </div>
 
@@ -157,6 +170,12 @@ export function Header() {
                             <span className="text-sm font-medium text-muted-foreground">Toggle Theme</span>
                             <ThemeToggleButton />
                         </div>
+                         {canInstallPWA && (
+                            <Button variant="outline" onClick={promptInstall} className="w-full">
+                                <Download className="mr-2 h-4 w-4" />
+                                Install App
+                            </Button>
+                        )}
                     </div>
 
                     <div className="mt-auto">

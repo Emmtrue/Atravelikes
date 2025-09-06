@@ -5,44 +5,52 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Star, BedDouble } from 'lucide-react';
+import type { LiteAPIHotel } from '@/lib/types';
+import { useSearchParams } from 'next/navigation';
 
-type Hotel = {
-    id: number;
-    name: string;
-    image: string;
-    rating: string;
-    price: number;
-    amenities: string[];
-};
-
-export function HotelResultCard({ hotel }: { hotel: Hotel }) {
+export function HotelResultCard({ hotel }: { hotel: LiteAPIHotel }) {
+    const searchParams = useSearchParams();
+    const bestRate = hotel.rates?.[0];
 
     return (
-        <Link href={`/hotels/${hotel.id}`} className="block h-full">
-            <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow duration-300">
+        <Link href={`/hotels/${hotel.hotelId}?${searchParams.toString()}`} className="block h-full group">
+            <Card className="flex flex-col h-full overflow-hidden group-hover:shadow-lg transition-shadow duration-300 group-hover:border-primary/50">
                 <div className="relative w-full h-48">
-                    <Image src={hotel.image} alt={hotel.name} data-ai-hint="hotel room" fill className="object-cover" />
+                    {hotel.hotelImages && hotel.hotelImages.length > 0 ? (
+                        <Image 
+                            src={hotel.hotelImages[0].url} 
+                            alt={hotel.name ?? 'Hotel Image'}
+                            data-ai-hint="hotel room" 
+                            fill 
+                            className="object-cover" 
+                            unoptimized
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <BedDouble className="h-16 w-16 text-muted-foreground" />
+                        </div>
+                    )}
                 </div>
-                <CardHeader>
-                    <CardTitle>{hotel.name}</CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span>{hotel.rating}</span>
-                    </div>
+                <CardHeader className="flex-grow">
+                    <CardTitle className="truncate text-lg">{hotel.name}</CardTitle>
+                    {hotel.starRating && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span>{hotel.starRating}.0 Stars</span>
+                        </div>
+                    )}
                 </CardHeader>
-                <CardContent className="flex-grow">
-                    <div className="flex flex-wrap gap-2">
-                        {hotel.amenities.map(amenity => (
-                            <Badge key={amenity} variant="secondary">{amenity}</Badge>
-                        ))}
-                    </div>
-                </CardContent>
-                <CardFooter className="flex justify-between items-center bg-muted/50 p-4">
+                <CardFooter className="flex justify-between items-center bg-muted/50 p-4 mt-auto">
                     <div>
-                        <p className="text-xl font-bold text-primary">${hotel.price}</p>
-                        <p className="text-xs text-muted-foreground">per night</p>
+                        {bestRate ? (
+                           <>
+                            <p className="text-muted-foreground text-xs">Prices from</p>
+                            <p className="text-xl font-bold text-primary">${bestRate.retailRate.amount.toFixed(2)}</p>
+                           </>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">Prices unavailable</p>
+                        )}
                     </div>
                     <Button>View Deal</Button>
                 </CardFooter>

@@ -13,18 +13,11 @@ import {
   LogOut,
   Users,
   CreditCard,
-  MessageSquare,
 } from 'lucide-react';
 
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { ChevronRight } from 'lucide-react';
 
 
 function NavLink({ href, label, icon: Icon, pathname }: { href: string, label: string, icon: React.ElementType, pathname: string }) {
@@ -33,7 +26,7 @@ function NavLink({ href, label, icon: Icon, pathname }: { href: string, label: s
             href={href}
             className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-                pathname.startsWith(href) && 'bg-muted text-primary'
+                pathname === href && 'bg-muted text-primary'
             )}
         >
             <Icon className="h-4 w-4" />

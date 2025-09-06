@@ -5,38 +5,69 @@ import { HotelResultCard } from '@/components/hotel-result-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Bed } from 'lucide-react';
+import type { LiteAPIHotel } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-// In a real app, this would fetch from a hotel API
-async function getHotels(destination: string) {
-    console.log(`Fetching hotels for ${destination}...`);
-    // Mocking an API call
-    await new Promise(resolve => setTimeout(resolve, 500)); 
-
-    if (destination.toLowerCase() === 'nowhere') {
-        return [];
+async function getHotels(destination: string, checkIn: string, checkOut: string, adults: string, rooms: string): Promise<{ data: LiteAPIHotel[] | null; error: string | null }> {
+    if (!destination || !checkIn || !checkOut || !adults) {
+        return { data: null, error: 'Please provide all search parameters.' };
     }
 
-    return Array.from({ length: 6 }, (_, i) => ({
-        id: i,
-        name: `Hotel Paradiso #${i + 1}`,
-        image: `https://picsum.photos/400/300?random=hotel${i}`,
-        rating: (4.5 - i * 0.2).toFixed(1),
-        price: 120 + i * 30,
-        amenities: ['Free WiFi', 'Pool', 'Breakfast'],
-    }));
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
+    const url = new URL('/api/hotels', baseUrl);
+
+    try {
+        const response = await fetch(url.toString(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            city: destination,
+            checkin: checkIn,
+            checkout: checkOut,
+            adults: parseInt(adults),
+            rooms: parseInt(rooms),
+          }),
+          cache: 'no-store' 
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error(`API Error: ${response.status} ${response.statusText}`, data);
+            return { data: null, error: data.message || 'Could not fetch hotel data.' };
+        }
+        
+        return { data: data.data || [], error: null };
+    } catch (error) {
+        console.error("Failed to fetch hotels:", error);
+        return { data: null, error: 'An unexpected error occurred while fetching hotels.' };
+    }
 }
 
 
-async function HotelsContent({ destination }: { destination: string }) {
-    const hotels = await getHotels(destination);
+async function HotelsContent({ destination, checkIn, checkOut, adults, rooms }: { destination: string, checkIn: string, checkOut: string, adults: string, rooms: string }) {
+    const { data: hotels, error } = await getHotels(destination, checkIn, checkOut, adults, rooms);
+
+    if (error) {
+        return (
+             <div className="md:col-span-2 lg:col-span-3">
+                <Alert variant="destructive">
+                    <Bed className="h-4 w-4" />
+                    <AlertTitle>Could Not Fetch Hotels</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            </div>
+        )
+    }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {hotels && hotels.length > 0 ? (
                 hotels.map((hotel) => (
-                    <HotelResultCard key={hotel.id} hotel={hotel} />
+                    <HotelResultCard key={hotel.hotelId} hotel={hotel} />
                 ))
             ) : (
                 <div className="md:col-span-2 lg:col-span-3">
@@ -44,7 +75,7 @@ async function HotelsContent({ destination }: { destination: string }) {
                         <Bed className="h-4 w-4" />
                         <AlertTitle>No Hotels Found</AlertTitle>
                         <AlertDescription>
-                            We couldn't find any hotels in {destination}. Please try a different location.
+                            We couldn't find any hotels in {destination} for the selected dates. Please try a different location or adjust your dates.
                         </AlertDescription>
                     </Alert>
                 </div>
@@ -56,6 +87,26 @@ async function HotelsContent({ destination }: { destination: string }) {
 
 export default function HotelsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const destination = searchParams?.destination as string || 'your destination';
+  const checkInDate = searchParams?.checkInDate as string;
+  const checkOutDate = searchParams?.checkOutDate as string;
+  const guests = searchParams?.guests as string || '2';
+  const rooms = searchParams?.rooms as string || '1';
+
+
+  if (!checkInDate || !checkOutDate || !destination) {
+    return (
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <Alert variant="destructive">
+                <Bed className="h-4 w-4" />
+                <AlertTitle>Missing Information</AlertTitle>
+                <AlertDescription>
+                    Destination, check-in, and check-out dates are required. Please go back and complete the search form.
+                </AlertDescription>
+            </Alert>
+        </div>
+    )
+  }
+
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -69,7 +120,7 @@ export default function HotelsPage({ searchParams }: { searchParams: { [key: str
           </Suspense>
         </div>
         <Suspense fallback={<HotelsSkeleton />}>
-            <HotelsContent destination={destination} />
+            <HotelsContent destination={destination} checkIn={checkInDate} checkOut={checkOutDate} adults={guests} rooms={rooms} />
         </Suspense>
       </div>
     </div>

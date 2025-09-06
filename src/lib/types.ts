@@ -1,74 +1,116 @@
 
-// This type is aligned with the response from the /schedules endpoint and /flights/{id}
+// This type is aligned with the response from the AeroDataBox API
+// Specifically for the FIDS (airport departures/arrivals) endpoint and flight status by number
 export type Flight = {
-    fa_flight_id?: string | null;
-    ident: string | null;
-    ident_icao?: string | null;
-    ident_iata?: string | null;
-    operator?: string | null;
-    flight_number?: string | null;
-    registration?: string | null;
-    atc_ident?: string | null;
-    inbound_fa_flight_id?: string | null;
-    blocked?: boolean;
-    diverted?: boolean;
-    cancelled?: boolean;
-    position_only?: boolean;
-    actual_ident?: string | null;
-    departure_delay?: number | null;
-    arrival_delay?: number | null;
-    filed_ete?: number | null;
-    progress_percent?: number | null;
-    status?: string;
-    aircraft_type?: string | null;
-    route_distance?: number | null;
-    filed_airspeed?: number | null;
-    filed_altitude?: number | null;
-    route?: string | null;
-    baggage_claim?: string | null;
-    seats_cabin_business?: number | null;
-    seats_cabin_coach?: number | null;
-    seats_cabin_first?: number | null;
-    gate_origin?: string | null;
-    gate_destination?: string | null;
-    terminal_origin?: string | null;
-    terminal_destination?: string | null;
-    type?: string;
+  number: string;
+  callSign?: string;
+  status: 'Unknown' | 'Scheduled' | 'EnRoute' | 'Landed' | 'Cancelled' | 'Diverted';
+  codeshareStatus: 'Unknown' | 'IsOperator' | 'IsCodeshared';
+  isCargo: boolean;
+  
+  departure: {
+    airport: Airport;
+    scheduledTime: TimeInfo;
+    revisedTime?: TimeInfo;
+    runwayTime?: TimeInfo;
+    terminal?: string;
+    gate?: string;
+    quality: string[];
+  };
 
-    origin: {
-        code: string;
-        code_icao: string;
-        code_iata: string;
-        code_lid: string;
-        timezone: string;
-        name: string;
-        city: string;
-        airport_info_url: string;
-    } | null;
-    destination: {
-        code: string;
-        code_icao: string;
-        code_iata: string;
-        code_lid: string;
-        timezone: string;
-        name: string;
-        city: string;
-        airport_info_url: string;
-    } | null;
+  arrival: {
+    airport: Airport;
+    scheduledTime: TimeInfo;
+    revisedTime?: TimeInfo;
+    runwayTime?: TimeInfo;
+    terminal?: string;
+    gate?: string;
+    baggageBelt?: string;
+    quality: string[];
+  };
 
-    scheduled_out: string | null;
-    estimated_out?: string | null;
-    actual_out?: string | null;
-    scheduled_off?: string | null;
-    estimated_off?: string | null;
-    actual_off?: string | null;
-    
-    scheduled_in: string | null;
-    estimated_in?: string | null;
-    actual_in?: string | null;
-    scheduled_on?: string | null;
-    estimated_on?: string | null;
-    actual_on?: string | null;
-    
-    foresight_predictions_available?: boolean;
+  aircraft?: {
+    reg?: string;
+    modeS?: string;
+    model?: string;
+    image?: {
+      url: string;
+      webUrl: string;
+      author: string;
+      title: string;
+      description: string;
+      license: string;
+      htmlAttributions: string[];
+    };
+  };
+
+  airline: {
+    name: string;
+    iata?: string;
+    icao?: string;
+  };
+
+  greatCircleDistance?: {
+    meter: number;
+    km: number;
+    mile: number;
+    nm: number;
+    feet: number;
+  };
 };
+
+export type Airport = {
+  icao: string;
+  iata: string;
+  name: string;
+  shortName: string;
+  municipalityName: string;
+  location: {
+    lat: number;
+    lon: number;
+  };
+  countryCode: string;
+};
+
+export type TimeInfo = {
+  utc: string;
+  local: string;
+};
+
+
+// Types for LiteAPI v3.0
+export interface LiteAPIPlace {
+  placeId: string;
+  displayName: string;
+  formattedAddress: string;
+  types: string[];
+  language: string;
+}
+
+export interface LiteAPIHotelImage {
+  url: string;
+  urlHd?: string;
+  caption?: string;
+  defaultImage?: boolean;
+}
+
+export interface LiteAPIRate {
+  rateId: string;
+  retailRate: {
+    amount: number;
+    currency: {
+      code: string;
+    };
+  };
+}
+
+export interface LiteAPIHotel {
+  hotelId: string;
+  name?: string;
+  address?: string;
+  starRating?: number;
+  hotelImages?: LiteAPIHotelImage[];
+  hotelFacilities?: string[];
+  rates?: LiteAPIRate[];
+  roomTypes?: any[];
+}

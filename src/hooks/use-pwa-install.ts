@@ -19,12 +19,8 @@ export function usePWAInstall() {
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
-      // Stash the event so it can be triggered later.
       setInstallPrompt(event as BeforeInstallPromptEvent);
-      // Check if not running in standalone mode (already installed)
-      if (!window.matchMedia('(display-mode: standalone)').matches) {
-        setCanInstallPWA(true);
-      }
+      setCanInstallPWA(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -34,20 +30,20 @@ export function usePWAInstall() {
     };
   }, []);
 
-  const promptInstall = async () => {
+  const promptInstall = () => {
     if (!installPrompt) {
-        console.log("Installation prompt not available.");
-        return;
+      return;
     }
-    await installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-    if (outcome === 'accepted') {
-      console.log('PWA installation accepted');
-      setCanInstallPWA(false); // Hide button after install
-    } else {
-      console.log('PWA installation dismissed');
-    }
-    setInstallPrompt(null);
+    installPrompt.prompt();
+    installPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the PWA installation');
+      } else {
+        console.log('User dismissed the PWA installation');
+      }
+      setInstallPrompt(null);
+      setCanInstallPWA(false);
+    });
   };
 
   return { canInstallPWA, promptInstall };

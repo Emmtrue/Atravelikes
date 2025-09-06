@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { addDays, format } from "date-fns"
-import { CalendarIcon, Users, BedDouble } from "lucide-react"
+import { CalendarIcon, Users, BedDouble, Briefcase } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { useRouter } from "next/navigation"
 
@@ -26,6 +26,7 @@ const FormSchema = z.object({
     to: z.date({ required_error: "Check-out date is required." }),
   }),
   guests: z.coerce.number().int().min(1, "At least one guest is required.").max(10, "Max 10 guests."),
+  rooms: z.coerce.number().int().min(1, "At least one room is required.").max(5, "Max 5 rooms."),
 });
 
 export function HotelSearchForm() {
@@ -37,6 +38,7 @@ export function HotelSearchForm() {
     defaultValues: {
       destination: "",
       guests: 2,
+      rooms: 1,
       dates: {
         from: new Date(),
         to: addDays(new Date(), 3),
@@ -50,6 +52,7 @@ export function HotelSearchForm() {
       checkInDate: format(data.dates.from, 'yyyy-MM-dd'),
       checkOutDate: format(data.dates.to, 'yyyy-MM-dd'),
       guests: data.guests,
+      rooms: data.rooms,
     }
     
     const result = await handleHotelSearch(payload);
@@ -60,6 +63,7 @@ export function HotelSearchForm() {
           checkInDate: format(data.dates.from, 'yyyy-MM-dd'),
           checkOutDate: format(data.dates.to, 'yyyy-MM-dd'),
           guests: data.guests.toString(),
+          rooms: data.rooms.toString(),
       });
       router.push(`/hotels?${searchParams.toString()}`);
     } else {
@@ -74,8 +78,8 @@ export function HotelSearchForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+          <div className="lg:col-span-4">
             <FormField
               control={form.control}
               name="destination"
@@ -94,55 +98,57 @@ export function HotelSearchForm() {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="dates"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Check-in — Check-out</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="date"
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !field.value?.from && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {field.value?.from ? (
-                        field.value.to ? (
-                          <>
-                            {format(field.value.from, "LLL dd, y")} -{" "}
-                            {format(field.value.to, "LLL dd, y")}
-                          </>
-                        ) : (
-                          format(field.value.from, "LLL dd, y")
-                        )
-                      ) : (
-                        <span>Pick a date range</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      initialFocus
-                      mode="range"
-                      defaultMonth={field.value?.from}
-                      selected={field.value as DateRange}
-                      onSelect={field.onChange}
-                      numberOfMonths={2}
-                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="lg:col-span-4">
+             <FormField
+                control={form.control}
+                name="dates"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Check-in — Check-out</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="date"
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value?.from && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value?.from ? (
+                            field.value.to ? (
+                              <>
+                                {format(field.value.from, "LLL dd, y")} -{" "}
+                                {format(field.value.to, "LLL dd, y")}
+                              </>
+                            ) : (
+                              format(field.value.from, "LLL dd, y")
+                            )
+                          ) : (
+                            <span>Pick a date range</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          initialFocus
+                          mode="range"
+                          defaultMonth={field.value?.from}
+                          selected={field.value as DateRange}
+                          onSelect={field.onChange}
+                          numberOfMonths={2}
+                          disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+          </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:grid-cols-1 xl:grid-cols-2">
+          <div className="lg:col-span-1">
             <FormField
               control={form.control}
               name="guests"
@@ -152,17 +158,45 @@ export function HotelSearchForm() {
                   <FormControl>
                     <div className="relative">
                       <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input type="number" placeholder="2" className="pl-9" {...field} />
+                      <Input 
+                        type="number"
+                        placeholder="2" 
+                        className="pl-9 hide-arrows" 
+                        {...field} 
+                      />
                     </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Searching...' : 'Search'}
-            </Button>
           </div>
+           <div className="lg:col-span-1">
+            <FormField
+              control={form.control}
+              name="rooms"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rooms</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        type="number"
+                        placeholder="1" 
+                        className="pl-9 hide-arrows" 
+                        {...field} 
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <Button type="submit" className="w-full lg:col-span-2" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? 'Searching...' : 'Search'}
+          </Button>
         </div>
       </form>
     </Form>

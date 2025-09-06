@@ -87,8 +87,8 @@ export default function FlightDetailsPage() {
           throw new Error(errorData.message || 'Failed to fetch flight details');
         }
         const data = await response.json();
-        // The API response for a specific flight is in the `flights` array
-        const flightData = data.flights && data.flights.length > 0 ? data.flights[0] : null;
+        // The API response for a specific flight is an array
+        const flightData = data && data.length > 0 ? data[0] : null;
 
         if (!flightData) {
             throw new Error('Flight not found.');
@@ -194,11 +194,11 @@ export default function FlightDetailsPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-4">
-                <Image src={`https://picsum.photos/80/80?random=${flight.operator || 'airline_lg'}`} alt={flight.operator || 'Airline'} width={64} height={64} className="rounded-full" data-ai-hint="airline logo"/>
+                <Image src={`https://picsum.photos/80/80?random=${flight.airline.name || 'airline_lg'}`} alt={flight.airline.name || 'Airline'} width={64} height={64} className="rounded-full" data-ai-hint="airline logo"/>
                 <div>
-                  <CardTitle className="text-3xl">{flight.operator} {flight.ident}</CardTitle>
+                  <CardTitle className="text-3xl">{flight.airline.name} {flight.number}</CardTitle>
                   <CardDescription className="text-lg">
-                    {flight.origin?.city} ({flight.origin?.code}) to {flight.destination?.city} ({flight.destination?.code})
+                    {flight.departure.airport?.municipalityName} ({flight.departure.airport?.iata}) to {flight.arrival.airport?.municipalityName} ({flight.arrival.airport?.iata})
                   </CardDescription>
                 </div>
               </div>
@@ -206,43 +206,43 @@ export default function FlightDetailsPage() {
             <CardContent>
               <div className="flex justify-around items-center py-6 text-center border-y">
                 <div>
-                  <p className="text-2xl font-bold">{formatTime(flight.scheduled_out)}</p>
-                  <p className="text-muted-foreground">{flight.origin?.code}</p>
+                  <p className="text-2xl font-bold">{formatTime(flight.departure.scheduledTime.local)}</p>
+                  <p className="text-muted-foreground">{flight.departure.airport.iata}</p>
                 </div>
                 <div className="flex items-center text-muted-foreground">
                     <Plane className="h-6 w-6" />
                     <Separator className="w-24 mx-4 border-dashed" />
                     <div className="flex flex-col items-center">
                         <Clock className="h-4 w-4 mb-1" />
-                        <span className="text-sm font-medium">{calculateDuration(flight.scheduled_out, flight.scheduled_in)}</span>
+                        <span className="text-sm font-medium">{calculateDuration(flight.departure.scheduledTime.local, flight.arrival.scheduledTime.local)}</span>
                     </div>
                     <Separator className="w-24 mx-4 border-dashed" />
                     <Plane className="h-6 w-6 rotate-90" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{formatTime(flight.scheduled_in)}</p>
-                  <p className="text-muted-foreground">{flight.destination?.code}</p>
+                  <p className="text-2xl font-bold">{formatTime(flight.arrival.scheduledTime.local)}</p>
+                  <p className="text-muted-foreground">{flight.arrival.airport.iata}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 text-sm">
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Departure Details</h3>
-                    <p><strong>Date:</strong> {formatDate(flight.scheduled_out)}</p>
-                    <p><strong>Terminal:</strong> {flight.terminal_origin || 'N/A'}</p>
-                    <p><strong>Gate:</strong> {flight.gate_origin || 'N/A'}</p>
+                    <p><strong>Date:</strong> {formatDate(flight.departure.scheduledTime.local)}</p>
+                    <p><strong>Terminal:</strong> {flight.departure.terminal || 'N/A'}</p>
+                    <p><strong>Gate:</strong> {flight.departure.gate || 'N/A'}</p>
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg mb-2">Arrival Details</h3>
-                    <p><strong>Date:</strong> {formatDate(flight.scheduled_in)}</p>
-                    <p><strong>Terminal:</strong> {flight.terminal_destination || 'N/A'}</p>
-                    <p><strong>Gate:</strong> {flight.gate_destination || 'N/A'}</p>
+                    <p><strong>Date:</strong> {formatDate(flight.arrival.scheduledTime.local)}</p>
+                    <p><strong>Terminal:</strong> {flight.arrival.terminal || 'N/A'}</p>
+                    <p><strong>Gate:</strong> {flight.arrival.gate || 'N/A'}</p>
                   </div>
               </div>
                <Separator className="my-6" />
                 <div>
                     <h3 className="font-semibold text-lg mb-2">Aircraft Information</h3>
-                    <p><strong>Type:</strong> {flight.aircraft_type || 'N/A'}</p>
+                    <p><strong>Type:</strong> {flight.aircraft?.model || 'N/A'}</p>
                     <p><strong>Amenities:</strong> In-flight Wi-Fi, Power outlets, Free snacks</p>
                 </div>
             </CardContent>

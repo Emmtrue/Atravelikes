@@ -5,12 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { format } from "date-fns"
-import { CalendarIcon, Users, ArrowRightLeft } from "lucide-react"
+import { Users, ArrowRightLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
 import {
   Form,
   FormControl,
@@ -19,16 +17,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import { handleFlightSearch } from "@/app/actions"
 import { AutocompleteInput } from "./autocomplete-input"
 import { Input } from "@/components/ui/input"
 import { destinations } from '@/lib/destinations'
 import { useToast } from "@/hooks/use-toast"
+import { FlightDatePicker } from './flight-date-picker';
 
 const destinationLabels = destinations.map(d => d.label);
 
@@ -65,12 +59,11 @@ export function FlightSearchForm() {
     },
   });
 
-  // Helper to get the clean city/country name from the formatted label
-  const getCleanName = (label: string) => {
+  // Helper to get the IATA code from the label
+  const getIataCode = (label: string) => {
     if (!label) return '';
     const destination = destinations.find(d => d.label === label);
-    // Use the city name for the URL param as it's more human-readable
-    return destination ? destination.city : label.split(' ')[0];
+    return destination ? destination.iata : '';
   };
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -90,12 +83,12 @@ export function FlightSearchForm() {
       return;
     }
 
-    const cleanedOrigin = getCleanName(data.origin);
-    const cleanedDestination = getCleanName(data.destination);
+    const originIata = getIataCode(data.origin);
+    const destinationIata = getIataCode(data.destination);
 
     const params = new URLSearchParams({
-        origin: cleanedOrigin,
-        destination: cleanedDestination,
+        origin: originIata,
+        destination: destinationIata,
         departureDate: format(data.departureDate, 'yyyy-MM-dd'),
         passengers: data.passengers.toString(),
     });
@@ -158,80 +151,23 @@ export function FlightSearchForm() {
               control={form.control}
               name="departureDate"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Departure</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            <span className="truncate">{format(field.value, "PPP")}</span>
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
+                <FlightDatePicker 
+                  field={field} 
+                  label="Departure" 
+                  disabledDate={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                />
               )}
             />
             <FormField
               control={form.control}
               name="returnDate"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Return</FormLabel>
-                   <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            <span className="truncate">{format(field.value, "PPP")}</span>
-                          ) : (
-                            <span>One way</span>
-                          )}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < (form.getValues("departureDate") || new Date(new Date().setHours(0,0,0,0)))
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
+                <FlightDatePicker 
+                  field={field} 
+                  label="Return" 
+                  placeholder="One way"
+                  disabledDate={(date) => date < (form.getValues("departureDate") || new Date(new Date().setHours(0, 0, 0, 0)))}
+                />
               )}
             />
           </div>

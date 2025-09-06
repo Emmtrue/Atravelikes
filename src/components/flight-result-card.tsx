@@ -8,14 +8,13 @@ import { Button } from '@/components/ui/button';
 import { PlaneTakeoff, PlaneLanding, Clock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Flight } from '@/lib/types';
-import { parseISO } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 
 function formatTime(timeString: string | null | undefined): string {
     if (!timeString) return 'N/A';
     try {
         const date = parseISO(timeString);
-        // Format the time in UTC to ensure consistency between server and client
         return formatInTimeZone(date, 'UTC', 'HH:mm');
     } catch (error) {
         console.error("Invalid date format:", timeString, error);
@@ -42,9 +41,14 @@ export function FlightResultCard({ flight, passengers }: { flight: Flight, passe
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   searchParams.set('passengers', passengers);
 
-  const duration = flight.scheduled_out && flight.scheduled_in ? calculateDuration(flight.scheduled_out, flight.scheduled_in) : 'N/A';
+  const departureTime = flight.departure?.scheduledTime?.local;
+  const arrivalTime = flight.arrival?.scheduledTime?.local;
 
-  const flightId = flight.fa_flight_id || flight.ident;
+  const duration = departureTime && arrivalTime ? calculateDuration(departureTime, arrivalTime) : 'N/A';
+
+  // Construct a unique but predictable ID for navigation
+  const flightId = `${flight.number}-${format(new Date(departureTime || Date.now()), 'yyyy-MM-dd')}`;
+  
   if (!flightId) {
     return null; // Don't render if we have no ID
   }
@@ -55,17 +59,17 @@ export function FlightResultCard({ flight, passengers }: { flight: Flight, passe
         <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
         
           <div className="md:col-span-3 flex items-center gap-3">
-            <Image src={`https://picsum.photos/40/40?random=${flight.ident || 'airline'}`} alt={flight.ident || 'Airline'} data-ai-hint="airline logo" width={40} height={40} className="rounded-full" />
+            <Image src={`https://picsum.photos/40/40?random=${flight.airline.name || 'airline'}`} alt={flight.airline.name || 'Airline'} data-ai-hint="airline logo" width={40} height={40} className="rounded-full" />
             <div className="flex flex-col">
-              <p className="font-bold text-base text-foreground">{flight.actual_ident || flight.ident}</p>
-              <p className="text-xs text-muted-foreground">Direct flight</p>
+              <p className="font-bold text-base text-foreground">{flight.number}</p>
+              <p className="text-xs text-muted-foreground">{flight.airline.name}</p>
             </div>
           </div>
           
           <div className="md:col-span-6 flex items-center justify-between text-center">
             <div className="flex flex-col items-start">
-                <p className="font-bold text-2xl text-foreground">{formatTime(flight.scheduled_out)}</p>
-                <p className="text-sm font-medium text-muted-foreground">{flight.origin}</p>
+                <p className="font-bold text-2xl text-foreground">{formatTime(departureTime)}</p>
+                <p className="text-sm font-medium text-muted-foreground">{flight.departure?.airport?.iata}</p>
             </div>
             
             <div className="flex-1 flex items-center justify-center mx-4">
@@ -82,8 +86,8 @@ export function FlightResultCard({ flight, passengers }: { flight: Flight, passe
             </div>
 
             <div className="flex flex-col items-end">
-                <p className="font-bold text-2xl text-foreground">{formatTime(flight.scheduled_in)}</p>
-                <p className="text-sm font-medium text-muted-foreground">{flight.destination}</p>
+                <p className="font-bold text-2xl text-foreground">{formatTime(arrivalTime)}</p>
+                <p className="text-sm font-medium text-muted-foreground">{flight.arrival?.airport?.iata}</p>
             </div>
           </div>
 

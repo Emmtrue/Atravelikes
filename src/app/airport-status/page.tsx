@@ -14,24 +14,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Plane, Terminal, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import type { Flight } from '@/lib/types';
+import { format } from 'date-fns';
 
 const AirportStatusSchema = z.object({
   airportCode: z.string().min(3, 'Airport code must be at least 3 characters').max(4, 'Airport code can be max 4 characters').regex(/^[A-Z]{3,4}$/, 'Please enter a valid ICAO/IATA airport code (e.g., JFK, EGLL)'),
 });
 
-type Flight = {
-  ident: string;
-  type: string;
-  origin: { code: string } | null;
-  destination: { code: string } | null;
-  scheduled_out: string;
-  estimated_out: string;
-  scheduled_in: string;
-  estimated_in: string;
-  status: string;
-  gate_origin: string | null;
-  gate_destination: string | null;
-};
 
 export default function AirportStatusPage() {
   const [flights, setFlights] = useState<{ arrivals: Flight[]; departures: Flight[] } | null>(null);
@@ -61,17 +50,36 @@ export default function AirportStatusPage() {
       setIsLoading(false);
     }
   }
+
+  const formatTime = (timeInfo: { local?: string } | null | undefined) => {
+    if (!timeInfo?.local) return 'N/A';
+    try {
+      const date = new Date(timeInfo.local);
+      return format(date, 'HH:mm');
+    } catch (e) {
+      return 'N/A';
+    }
+  };
   
-  const renderFlightRow = (flight: Flight, type: 'departure' | 'arrival') => (
-    <TableRow key={flight.ident}>
-      <TableCell className="font-medium">{flight.ident}</TableCell>
-      <TableCell>{type === 'departure' ? flight.destination?.code || 'N/A' : flight.origin?.code || 'N/A'}</TableCell>
-      <TableCell>{flight.status}</TableCell>
-      <TableCell>{type === 'departure' ? flight.gate_origin || 'N/A' : flight.gate_destination || 'N/A'}</TableCell>
-      <TableCell>{new Date(flight.scheduled_out).toLocaleTimeString()}</TableCell>
-      <TableCell>{flight.estimated_out ? new Date(flight.estimated_out).toLocaleTimeString() : 'N/A'}</TableCell>
-    </TableRow>
-  );
+  const renderFlightRow = (flight: Flight, type: 'departure' | 'arrival') => {
+    // A more robust unique key using flight number, departure time, and arrival time.
+    const uniqueKey = `${flight.number}-${flight.departure?.scheduledTime?.utc || 'N/A'}-${flight.arrival?.scheduledTime?.utc || 'N/A'}`;
+    const destinationAirport = type === 'departure' ? flight.arrival?.airport?.iata : flight.departure?.airport?.iata;
+    const gate = type === 'departure' ? flight.departure?.gate : flight.arrival?.gate;
+    const scheduledTime = type === 'departure' ? flight.departure?.scheduledTime : flight.arrival?.scheduledTime;
+    const revisedTime = type === 'departure' ? flight.departure?.revisedTime : flight.arrival?.revisedTime;
+
+    return (
+        <TableRow key={uniqueKey}>
+        <TableCell className="font-medium">{flight.number}</TableCell>
+        <TableCell>{destinationAirport || 'N/A'}</TableCell>
+        <TableCell>{flight.status}</TableCell>
+        <TableCell>{gate || 'N/A'}</TableCell>
+        <TableCell>{formatTime(scheduledTime)}</TableCell>
+        <TableCell>{revisedTime ? formatTime(revisedTime) : 'N/A'}</TableCell>
+        </TableRow>
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

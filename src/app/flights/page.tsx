@@ -16,16 +16,16 @@ async function getFlights(origin: string, destination: string, date: string): Pr
         return { data: null, error: 'Please provide a valid origin, destination, and date.' };
     }
 
-    if (origin.toLowerCase() === 'anywhere') {
-        return { data: null, error: 'Please select a specific origin airport for your search.' };
-    }
-
     // Find the airport codes from the destinations list
     const originDest = destinations.find(d => d.label.toLowerCase() === origin.toLowerCase());
     const destDest = destinations.find(d => d.label.toLowerCase() === destination.toLowerCase());
 
     const originCode = originDest?.iata || origin;
     const destCode = destDest?.iata || destination;
+
+    if (originCode === 'Anywhere') {
+         return { data: null, error: 'Please select a specific origin airport for your search.' };
+    }
     
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
     const url = new URL('/api/flights', baseUrl);
@@ -35,14 +35,14 @@ async function getFlights(origin: string, destination: string, date: string): Pr
 
     try {
         const response = await fetch(url.toString(), { cache: 'no-store' });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: `API Error: ${response.status} ${response.statusText}` }));
-            console.error(`API Error: ${response.status} ${response.statusText}`, errorData);
-            return { data: null, error: errorData.message || 'Could not fetch flight data.' };
-        }
         const data = await response.json();
-        // The API response for schedules is directly an array in the `scheduled` property
-        return { data: data.scheduled || [], error: null };
+
+        if (!response.ok) {
+            console.error(`API Error: ${response.status} ${response.statusText}`, data);
+            return { data: null, error: data.message || 'Could not fetch flight data.' };
+        }
+        
+        return { data: data || [], error: null };
     } catch (error) {
         console.error("Failed to fetch flights:", error);
         return { data: null, error: 'An unexpected error occurred while fetching flights.' };
@@ -79,7 +79,7 @@ async function FlightsPageContent({ origin, destination, departureDate, passenge
             </Alert>
         ) : flights && flights.length > 0 ? (
             flights.map((flight, index) => (
-                <FlightResultCard key={flight.fa_flight_id || `${flight.ident}-${index}`} flight={flight} passengers={passengers}/>
+                <FlightResultCard key={`${flight.number}-${index}`} flight={flight} passengers={passengers}/>
             ))
         ) : (
             <Alert>
@@ -101,8 +101,8 @@ export default function FlightsPage({ searchParams }: { searchParams: { [key: st
     const departureDate = searchParams?.departureDate as string;
     const passengers = searchParams?.passengers as string || '1';
     
-    const destLabel = destinations.find(d => d.city.toLowerCase() === destination.toLowerCase())?.label || destination;
-    const originLabel = destinations.find(d => d.city.toLowerCase() === origin.toLowerCase())?.label || origin;
+    const destLabel = destinations.find(d => d.iata.toLowerCase() === destination.toLowerCase())?.label || destination;
+    const originLabel = destinations.find(d => d.iata.toLowerCase() === origin.toLowerCase())?.label || origin;
 
 
     if (!departureDate) {

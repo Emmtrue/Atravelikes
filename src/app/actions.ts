@@ -52,6 +52,7 @@ const HotelSearchSchema = z.object({
     checkInDate: z.string(),
     checkOutDate: z.string(),
     guests: z.coerce.number().int().min(1),
+    rooms: z.coerce.number().int().min(1),
 })
 
 export async function handleHotelSearch(

@@ -19,7 +19,6 @@ import { Separator } from '@/components/ui/separator';
 // Mock function to get booking data by ID
 const getBookingById = (id: string) => {
   // In a real app, this would be a database call.
-  // This is a sample structure based on the new flight details page.
   return {
     bookingId: id,
     user: {
@@ -29,12 +28,12 @@ const getBookingById = (id: string) => {
       avatar: 'https://picsum.photos/40/40?random=user1',
     },
     flight: {
-      ident: 'KQA535',
-      operator: 'Kenya Airways',
+      number: 'KQ535',
+      airline: 'Kenya Airways',
       origin: { code: 'LOS', city: 'Lagos' },
       destination: { code: 'NBO', city: 'Nairobi' },
-      scheduled_out: '2024-08-15T08:30:00Z',
-      scheduled_in: '2024-08-15T14:45:00Z',
+      departure: { scheduledTime: { local: '2024-08-15T08:30:00Z' } },
+      arrival: { scheduledTime: { local: '2024-08-15T14:45:00Z' } },
     },
     bookingDate: '2024-07-21T14:30:00Z',
     price: 475.50,
@@ -85,11 +84,11 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border rounded-lg">
                         <div className="text-center sm:text-left">
                             <p className="text-sm text-muted-foreground">Flight Number</p>
-                            <p className="font-bold text-lg">{booking.flight.ident}</p>
+                            <p className="font-bold text-lg">{booking.flight.number}</p>
                         </div>
                          <div className="text-center sm:text-left">
                             <p className="text-sm text-muted-foreground">Airline</p>
-                            <p className="font-bold text-lg">{booking.flight.operator}</p>
+                            <p className="font-bold text-lg">{booking.flight.airline}</p>
                         </div>
                         <div className="text-center">
                             <p className="text-sm text-muted-foreground">Route</p>
@@ -101,11 +100,11 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="p-4 border rounded-lg">
                             <p className="text-sm text-muted-foreground">Departure</p>
-                            <p className="font-bold text-lg">{formatDate(booking.flight.scheduled_out)} at {formatTime(booking.flight.scheduled_out)}</p>
+                            <p className="font-bold text-lg">{formatDate(booking.flight.departure.scheduledTime.local)} at {formatTime(booking.flight.departure.scheduledTime.local)}</p>
                         </div>
                          <div className="p-4 border rounded-lg">
                             <p className="text-sm text-muted-foreground">Arrival</p>
-                            <p className="font-bold text-lg">{formatDate(booking.flight.scheduled_in)} at {formatTime(booking.flight.scheduled_in)}</p>
+                            <p className="font-bold text-lg">{formatDate(booking.flight.arrival.scheduledTime.local)} at {formatTime(booking.flight.arrival.scheduledTime.local)}</p>
                         </div>
                     </div>
                 </CardContent>

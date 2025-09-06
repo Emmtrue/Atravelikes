@@ -15,7 +15,15 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+} from "@/components/ui/breadcrumb";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 
 const mockBookedFlights = [
@@ -99,13 +107,28 @@ export default function DashboardPage() {
                         <p className="text-sm font-medium truncate">{user.email}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 border rounded-lg">
-                    <User className="h-6 w-6 text-primary" />
-                    <div>
-                        <p className="text-sm text-muted-foreground">User ID</p>
-                        <p className="text-sm font-medium text-muted-foreground">{user.uid.substring(0,10)}...</p>
-                    </div>
-                </div>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <div className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted">
+                            <User className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="text-sm text-muted-foreground">User ID</p>
+                                <p className="text-sm font-medium text-muted-foreground">{user.uid.substring(0,10)}...</p>
+                            </div>
+                        </div>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Full User ID</DialogTitle>
+                            <DialogDescription>
+                                This is your unique identifier on Atravelikes.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="p-2 bg-muted rounded-md">
+                            <p className="text-sm font-mono break-all">{user.uid}</p>
+                        </div>
+                    </DialogContent>
+                </Dialog>
                 <div className="flex items-center gap-3 p-4 border rounded-lg">
                     <Calendar className="h-6 w-6 text-primary" />
                      <div>

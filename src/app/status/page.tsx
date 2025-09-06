@@ -16,9 +16,9 @@ import { formatInTimeZone } from "date-fns-tz";
 
 const StatusIcon = ({ status }: { status?: string }) => {
     const s = status?.toLowerCase() || '';
-    if (s.includes('on time')) return <CheckCircle2 className="h-4 w-4 text-green-600" />;
-    if (s.includes('delayed')) return <AlertTriangle className="h-4 w-4 text-orange-600" />;
-    if (s.includes('landed') || s.includes('arrived')) return <CheckCircle2 className="h-4 w-4 text-blue-600" />;
+    if (s.includes('on time') || s.includes('scheduled')) return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+    if (s.includes('delayed') || s.includes('diverted')) return <AlertTriangle className="h-4 w-4 text-orange-600" />;
+    if (s.includes('landed') || s.includes('arrived') || s.includes('enroute')) return <CheckCircle2 className="h-4 w-4 text-blue-600" />;
     return <Clock className="h-4 w-4 text-muted-foreground" />;
 }
 
@@ -47,7 +47,7 @@ function StatusResult() {
                     throw new Error(errorData.message || 'Flight not found.');
                 }
                 const data = await response.json();
-                const flightData = data.flights && data.flights.length > 0 ? data.flights[0] : null;
+                const flightData = data && data.length > 0 ? data[0] : null;
 
                 if (flightData) {
                      setFlight(flightData);
@@ -87,10 +87,10 @@ function StatusResult() {
         )
     }
     
-    const formatTime = (time: string | null | undefined) => {
-      if (!time) return 'N/A';
+    const formatTime = (timeInfo: {local: string} | null | undefined) => {
+      if (!timeInfo?.local) return 'N/A';
       try {
-        const date = parseISO(time);
+        const date = parseISO(timeInfo.local);
         return formatInTimeZone(date, 'UTC', 'HH:mm');
       } catch (e) {
         return 'N/A';
@@ -102,8 +102,8 @@ function StatusResult() {
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="text-2xl">Flight {flight.ident}</CardTitle>
-                        <CardDescription>{flight.operator} &middot; {flight.scheduled_out ? new Date(flight.scheduled_out).toLocaleDateString() : ''}</CardDescription>
+                        <CardTitle className="text-2xl">Flight {flight.number}</CardTitle>
+                        <CardDescription>{flight.airline.name} &middot; {flight.departure.scheduledTime.local ? new Date(flight.departure.scheduledTime.local).toLocaleDateString() : ''}</CardDescription>
                     </div>
                     <Badge variant="outline" className={`capitalize text-base px-3 py-1`}>
                         <StatusIcon status={flight.status} /> <span className="ml-2">{flight.status}</span>
@@ -113,8 +113,8 @@ function StatusResult() {
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 items-center text-center">
                     <div>
-                        <p className="text-3xl font-bold">{flight.origin?.code}</p>
-                        <p className="text-muted-foreground">{flight.origin?.city}</p>
+                        <p className="text-3xl font-bold">{flight.departure.airport.iata}</p>
+                        <p className="text-muted-foreground">{flight.departure.airport.municipalityName}</p>
                     </div>
                     <div className="my-4 md:my-0 flex items-center justify-center text-primary">
                         <Separator className="md:hidden w-1/4" />
@@ -122,24 +122,24 @@ function StatusResult() {
                         <Separator className="flex-1 hidden md:block" />
                     </div>
                     <div>
-                        <p className="text-3xl font-bold">{flight.destination?.code}</p>
-                        <p className="text-muted-foreground">{flight.destination?.city}</p>
+                        <p className="text-3xl font-bold">{flight.arrival.airport.iata}</p>
+                        <p className="text-muted-foreground">{flight.arrival.airport.municipalityName}</p>
                     </div>
                 </div>
                 <Separator />
                 <div className="grid grid-cols-2 gap-8">
                     <div className="text-center">
                         <h3 className="font-semibold text-lg text-muted-foreground">Departure</h3>
-                        <p>Scheduled: {formatTime(flight.scheduled_out)}</p>
+                        <p>Scheduled: {formatTime(flight.departure.scheduledTime)}</p>
                         <p className="font-bold text-xl">
-                            Actual: {flight.actual_out ? formatTime(flight.actual_out) : (flight.estimated_out ? formatTime(flight.estimated_out) + ' (Est)' : 'N/A')}
+                            Actual: {flight.departure.runwayTime ? formatTime(flight.departure.runwayTime) : (flight.departure.revisedTime ? formatTime(flight.departure.revisedTime) + ' (Est)' : 'N/A')}
                         </p>
                     </div>
                     <div className="text-center">
                         <h3 className="font-semibold text-lg text-muted-foreground">Arrival</h3>
-                        <p>Scheduled: {formatTime(flight.scheduled_in)}</p>
+                        <p>Scheduled: {formatTime(flight.arrival.scheduledTime)}</p>
                         <p className="font-bold text-xl">
-                           Actual: {flight.actual_in ? formatTime(flight.actual_in) : (flight.estimated_in ? formatTime(flight.estimated_in) + ' (Est)' : 'N/A')}
+                           Actual: {flight.arrival.runwayTime ? formatTime(flight.arrival.runwayTime) : (flight.arrival.revisedTime ? formatTime(flight.arrival.revisedTime) + ' (Est)' : 'N/A')}
                         </p>
                     </div>
                 </div>

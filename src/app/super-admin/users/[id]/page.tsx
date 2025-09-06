@@ -1,7 +1,4 @@
 
-'use client';
-
-import React from 'react';
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -27,11 +24,15 @@ const getUserById = (id: string) => {
 }
 
 export default function UserDetailsPage({ params }: { params: { id: string } }) {
-  const user = getUserById(React.use(params).id);
+  const user = getUserById(params.id);
 
   if (!user) {
     return <div>User not found</div>;
   }
+  
+  // Perform date formatting on the server
+  const formattedSignUpDate = new Date(user.signUpDate).toLocaleDateString();
+  const formattedLastLogin = new Date(user.lastLogin).toLocaleDateString();
 
   return (
     <div className="space-y-8">
@@ -99,14 +100,14 @@ export default function UserDetailsPage({ params }: { params: { id: string } }) 
                         <Calendar className="h-5 w-5 text-primary" />
                         <div>
                             <p className="text-xs text-muted-foreground">Sign-up Date</p>
-                            <p className="text-sm font-medium">{new Date(user.signUpDate).toLocaleDateString()}</p>
+                            <p className="text-sm font-medium">{formattedSignUpDate}</p>
                         </div>
                     </div>
                       <div className="flex items-center gap-4 p-3 rounded-lg border">
                         <Calendar className="h-5 w-5 text-primary" />
                         <div>
                             <p className="text-xs text-muted-foreground">Last Login</p>
-                            <p className="text-sm font-medium">{new Date(user.lastLogin).toLocaleDateString()}</p>
+                            <p className="text-sm font-medium">{formattedLastLogin}</p>
                         </div>
                     </div>
                      <div className="flex items-center gap-4 p-3 rounded-lg border">

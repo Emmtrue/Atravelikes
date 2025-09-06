@@ -2,12 +2,13 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
   "projectId": "new-prototype-yvlyd",
   "appId": "1:625332412492:web:f45a7dc4a6052c189c14e9",
-  "storageBucket": "new-prototype-yvlyd.firebasestorage.app",
+  "storageBucket": "new-prototype-yvlyd.appspot.com",
   "apiKey": "AIzaSyBeYWjGEoJADzViWHegW9w0DUVJLOjNrGw",
   "authDomain": "new-prototype-yvlyd.firebaseapp.com",
   "measurementId": "",
@@ -18,3 +19,4 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
