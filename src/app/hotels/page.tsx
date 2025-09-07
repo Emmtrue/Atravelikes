@@ -14,11 +14,10 @@ async function getHotels(destination: string, checkIn: string, checkOut: string,
         return { data: null, error: 'Please provide all search parameters.' };
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
-    const url = new URL('/api/hotels', baseUrl);
+    const url = '/api/hotels';
 
     try {
-        const response = await fetch(url.toString(), {
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

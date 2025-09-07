@@ -23,7 +23,7 @@ async function getHotelDetails({ id, checkIn, checkOut, guests, rooms }: { id: s
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            hotelId: id,
+            hotelIds: [id],
             checkin: checkIn,
             checkout: checkOut,
             adults: parseInt(guests),
@@ -230,5 +230,3 @@ export default function HotelDetailsPage() {
     </div>
   );
 }
-
-    
