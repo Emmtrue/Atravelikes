@@ -9,52 +9,11 @@ import { Info, AlertTriangle } from 'lucide-react';
 import type { Flight } from '@/lib/types';
 import { LocationHint } from '@/components/location-hint';
 import { destinations } from '@/lib/destinations';
+import { getFlightsByRoute } from '@/lib/flight-search';
 
-
-async function getFlights(origin: string, destination: string, date: string): Promise<{ data: Flight[] | null; error: string | null }> {
-    if (!origin || !destination || !date) {
-        return { data: null, error: 'Please provide a valid origin, destination, and date.' };
-    }
-
-    // Find the airport codes from the destinations list
-    const originDest = destinations.find(d => d.label.toLowerCase() === origin.toLowerCase());
-    const destDest = destinations.find(d => d.label.toLowerCase() === destination.toLowerCase());
-
-    const originCode = originDest?.iata || origin;
-    const destCode = destDest?.iata || destination;
-
-    if (originCode === 'Anywhere') {
-         return { data: null, error: 'Please select a specific origin airport for your search.' };
-    }
-    
-    // Construct an absolute URL to reliably fetch from the API route in both local and Vercel environments.
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:9002';
-      
-    const url = new URL('/api/flights', baseUrl);
-    url.searchParams.append('origin', originCode);
-    url.searchParams.append('destination', destCode);
-    url.searchParams.append('departureDate', date);
-    
-    try {
-        const response = await fetch(url.toString(), { cache: 'no-store' });
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error(`API Error: ${response.status} ${response.statusText}`, data);
-            return { data: null, error: data.message || 'Could not fetch flight data.' };
-        }
-        
-        return { data: data || [], error: null };
-    } catch (error) {
-        console.error("Failed to fetch flights:", error);
-        return { data: null, error: 'An unexpected error occurred while fetching flights.' };
-    }
-}
 
 async function FlightsPageContent({ origin, destination, departureDate, passengers }: { origin: string, destination: string, departureDate: string, passengers: string }) {
-  const { data: flights, error } = await getFlights(origin, destination, departureDate);
+  const { data: flights, error } = await getFlightsByRoute(origin, destination, departureDate);
 
   const formattedDate = new Date(departureDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   
