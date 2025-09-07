@@ -27,12 +27,18 @@ async function getFlights(origin: string, destination: string, date: string): Pr
          return { data: null, error: 'Please select a specific origin airport for your search.' };
     }
     
-    // Construct the URL path and query string for the API request.
-    const url = `/api/flights?origin=${encodeURIComponent(originCode)}&destination=${encodeURIComponent(destCode)}&departureDate=${encodeURIComponent(date)}`;
+    // Construct an absolute URL to reliably fetch from the API route in both local and Vercel environments.
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:9002';
+      
+    const url = new URL('/api/flights', baseUrl);
+    url.searchParams.append('origin', originCode);
+    url.searchParams.append('destination', destCode);
+    url.searchParams.append('departureDate', date);
     
     try {
-        // Fetch from the absolute path. This works correctly on the server.
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetch(url.toString(), { cache: 'no-store' });
         const data = await response.json();
 
         if (!response.ok) {
